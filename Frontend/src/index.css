@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+/* =========================
+   AGROLENS LIGHT THEME
+========================= */
+:root {
+  --background: #f7f4ee;
+  --foreground: #2b211b;
+
+  --primary: #3b7f4a;
+  --secondary: #e9e3d8;
+
+  --muted: #ddd6c8;
+  --border: #e6dccf;
+
+  --ag-green: #3b7f4a;
+  --ag-cyan: #3c9aa6;
+  --ag-amber: #d6a85a;
+  --ag-red: #c45a4a;
+}
+
+@theme {
+  --color-background: #F3EEE5;
+  --color-surface: #FCFAF6;
+  --color-surface-2: #F6F1E8;
+  --color-foreground: #1F2937; /* warm off-white */
+  --color-foreground: #1F2937;
+
+  --color-muted-foreground: #6B7280;
+
+  --color-surface: #FFFFFF;
+  --color-surface-2: #F5F1E8; /* warm card tint */
+
+  --color-border: rgba(31, 41, 55, 0.08);
+
+  --color-ag-green: #16A34A;
+  --color-ag-cyan: #0891B2;
+  --color-ag-amber: #D97706;
+}
+
+/* =========================
+   BASE STYLES
+========================= */
+
+body {
+  @apply bg-background text-foreground;
+}
+
+/* =========================
+   COMPONENTS
+========================= */
+
+.surface-card {
+  @apply bg-surface rounded-2xl border border-border shadow-sm;
+}
+
+.surface-elevated {
+  @apply bg-surface-2 rounded-3xl border border-border shadow-md;
+}
+
+
+.leaflet-container {
+  z-index: 0 !important;
+}
+
+.leaflet-pane {
+  z-index: 1 !important;
+}
+
+.leaflet-control {
+  z-index: 2 !important;
+}
+
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 2 !important;
+}
