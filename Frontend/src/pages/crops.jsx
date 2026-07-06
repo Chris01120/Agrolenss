@@ -15,17 +15,24 @@ function normalizeCropId(name) {
     .replace(/(^-|-$)/g, "");
 }
 
-
-
 export default function CropsPage() {
-   const [crops, setCrops] = useState([]);
+  const navigate = useNavigate();
+  const { setCropId, region } = useDerivedAgroLens();
+
+  const [q, setQ] = useState("");
+
+  // ✅ FIX 1: loading state (you were missing this)
+  const [loading, setLoading] = useState(true);
+
+  // ✅ FIX 2: API data stored separately
+  const [apiCrops, setApiCrops] = useState([]);
 
   useEffect(() => {
     fetch("https://agrolenss.onrender.com/api/crops/")
       .then((res) => res.json())
       .then((data) => {
         console.log("CROPS DATA:", data);
-        setCrops(data);
+        setApiCrops(data);
         setLoading(false);
       })
       .catch((err) => {
@@ -34,84 +41,80 @@ export default function CropsPage() {
       });
   }, []);
 
-  
   useEffect(() => {
     document.title = "Crop Search — AGROLENS";
   }, []);
-
-  const { setCropId, region } = useDerivedAgroLens();
-
-  const navigate = useNavigate();
-
-  const [q, setQ] = useState("");
 
   const zoneName =
     ZONES.find((z) => z.id === region.primaryZone)?.name ??
     region.primaryZone;
 
   const { data: remote } = useCropList();
-
   const { data: intelligence } = useCropIntelligence(zoneName);
 
-  const intelligenceScores = useMemo(
-    () =>
-      new Map(
-        Object.entries(intelligence?.scores ?? {}).map(([crop, score]) => [
-          crop.toLowerCase(),
-          score,
-        ])
-      ),
-    [intelligence]
-  );
+  const intelligenceScores = useMemo(() => {
+    return new Map(
+      Object.entries(intelligence?.scores ?? {}).map(([crop, score]) => [
+        crop.toLowerCase(),
+        score,
+      ])
+    );
+  }, [intelligence]);
 
-  const crops = remote
-    ? remote.map((crop) => {
-        const local = CROPS.find(
-          (c) =>
-            c.id === crop.id ||
-            c.name.toLowerCase() === crop.name.toLowerCase()
-        );
+  // ✅ FIX 3: NO REDECLARATION OF "crops"
+  const baseCrops = remote || apiCrops || CROPS;
 
-        const id = local
-          ? local.id
-          : normalizeCropId(crop.name || String(crop.id));
+  const processedCrops = baseCrops.map((crop) => {
+    const local = CROPS.find(
+      (c) =>
+        c.id === crop.id ||
+        c.name.toLowerCase() === crop.name.toLowerCase()
+    );
 
-        const merged = local
-          ? {
-              ...local,
-              ...crop,
-              id,
-              backendId: crop.id,
-              growthDays:
-                local.growthDays ?? crop.growth_duration_days,
-            }
-          : {
-              ...crop,
-              id,
-              backendId: crop.id,
-              emoji: crop.emoji ?? "🌱",
-              growthDays: crop.growth_duration_days ?? 0,
-            };
+    const id = local
+      ? local.id
+      : normalizeCropId(crop.name || String(crop.id));
 
-        return {
-          ...merged,
-          scoreOverride:
-            merged.scores?.[region.primaryZone] ??
-            merged.scores?.[zoneName] ??
-            intelligenceScores.get(
-              merged.name.toLowerCase()
-            ),
+    const merged = local
+      ? {
+          ...local,
+          ...crop,
+          id,
+          backendId: crop.id,
+          growthDays: local.growthDays ?? crop.growth_duration_days,
+        }
+      : {
+          ...crop,
+          id,
+          backendId: crop.id,
+          emoji: crop.emoji ?? "🌱",
+          growthDays: crop.growth_duration_days ?? 0,
         };
-      })
-    : CROPS;
 
-  const filtered = crops.filter((c) =>
+    return {
+      ...merged,
+      scoreOverride:
+        merged.scores?.[region.primaryZone] ??
+        merged.scores?.[zoneName] ??
+        intelligenceScores.get(merged.name.toLowerCase()),
+    };
+  });
+
+  const filtered = processedCrops.filter((c) =>
     c.name.toLowerCase().includes(q.toLowerCase())
   );
 
   function handleSelect(id, override = null) {
     setCropId(id, override);
     navigate("/analysis");
+  }
+
+  if (loading) {
+    return (
+      <AppShell>
+        <p className="p-6">Loading crops...</p>
+      </AppShell>
+    );
   }
 
   return (
@@ -136,14 +139,13 @@ export default function CropsPage() {
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              autoFocus
-              placeholder="Search crops (Tomato, Cassava, Sorghum...)"
+              placeholder="Search crops..."
               className="w-full rounded-xl border border-transparent bg-transparent py-4 pl-12 pr-4 text-lg focus:outline-none"
             />
           </div>
         </div>
 
-        {/* Crop Cards */}
+        {/* Cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((c) => {
             const score =
@@ -166,70 +168,32 @@ export default function CropsPage() {
               <button
                 key={c.id}
                 onClick={() => handleSelect(c.id, c)}
-                className="surface-card group relative flex flex-col gap-3 overflow-hidden p-5 text-left transition hover:-translate-y-0.5"
-                style={{
-                  borderTop: `2px solid ${color}`,
-                }}
+                className="surface-card group relative flex flex-col gap-3 overflow-hidden p-5 text-left"
+                style={{ borderTop: `2px solid ${color}` }}
               >
                 <div className="flex items-start justify-between">
-                  <span
-                    className="grid h-14 w-14 place-items-center rounded-2xl text-3xl"
-                    style={{
-                      background: `radial-gradient(circle, color-mix(in oklab, ${color} 25%, transparent), transparent 70%), var(--surface-2)`,
-                    }}
-                  >
-                    {c.emoji ?? "🌱"}
-                  </span>
+                  <span className="text-3xl">{c.emoji ?? "🌱"}</span>
 
                   <span
-                    className="rounded-full px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-widest text-[#0F172A]"
-                    style={{
-                      backgroundColor: color,
-                    }}
+                    className="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                    style={{ backgroundColor: color }}
                   >
                     {score}/10
                   </span>
                 </div>
 
-                <div>
-                  <h3 className="font-display text-lg font-semibold text-foreground">
-                    {c.name}
-                  </h3>
+                <h3 className="text-lg font-semibold">{c.name}</h3>
 
-                  <p className="font-mono text-xs text-muted-foreground">
-                    {c.growthDays ??
-                      c.growth_duration_days ??
-                      "?"}{" "}
-                    day cycle
-                  </p>
-                </div>
-
-                <p
-                  className="text-xs"
-                  style={{ color }}
-                >
-                  {label} in{" "}
-                  {region.primaryZone.replace("-", " ")}
+                <p className="text-xs text-muted-foreground">
+                  {c.growthDays ?? c.growth_duration_days ?? "?"} day cycle
                 </p>
 
-                <div className="flex flex-wrap gap-1.5">
-                  {tags.slice(0, 2).map((t) => (
-                    <span
-                      key={t}
-                      className="rounded-full bg-secondary/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
+                <p className="text-xs" style={{ color }}>
+                  {label} in {region.primaryZone.replace("-", " ")}
+                </p>
 
-                <span
-                  className="mt-1 inline-flex items-center gap-1 text-xs font-semibold"
-                  style={{ color }}
-                >
-                  Analyze
-
-                  <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+                <span className="text-xs font-semibold" style={{ color }}>
+                  Analyze <ArrowRight className="inline h-3 w-3" />
                 </span>
               </button>
             );
@@ -237,8 +201,8 @@ export default function CropsPage() {
         </div>
 
         {filtered.length === 0 && (
-          <p className="mt-12 text-center text-sm text-muted-foreground">
-            No crops match "{q}".
+          <p className="text-center text-sm text-muted-foreground">
+            No crops match "{q}"
           </p>
         )}
       </div>
