@@ -15,7 +15,27 @@ function normalizeCropId(name) {
     .replace(/(^-|-$)/g, "");
 }
 
+
+
 export default function CropsPage() {
+   const [crops, setCrops] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("https://agrolenss.onrender.com/api/crops/")
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("CROPS DATA:", data);
+        setCrops(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching crops:", err);
+        setLoading(false);
+      });
+  }, []);
+
+  
   useEffect(() => {
     document.title = "Crop Search — AGROLENS";
   }, []);
