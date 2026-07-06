@@ -75,6 +75,8 @@ CORS_ALLOWED_ORIGINS = [
     "https://agrolenss-pjsbot9a5-chris0112s-projects.vercel.app",
 ]
 
+CORS_ALLOW_ALL_ORIGINS = True
+
 ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
