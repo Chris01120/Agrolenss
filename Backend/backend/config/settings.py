@@ -72,10 +72,12 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "https://agrolenss-pjsbot9a5-chris0112s-projects.vercel.app",
+    "https://agrolenss-7ioh7i5ji-chris0112s-projects.vercel.app",
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_ALL_ORIGINS = False
 
 ROOT_URLCONF = 'config.urls'
 
