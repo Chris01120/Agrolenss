@@ -1,6 +1,5 @@
 from django.core.management.base import BaseCommand
-from Backend.Backend.myproject.backend.crops.models import Crop, ClimateZone, CropZone, PestAlert
-
+from crops.models import Crop, ClimateZone, CropZone, PestAlert
 
 class Command(BaseCommand):
     help = "Seed West African crop intelligence data"
