@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { CROPS } from "./agrolens-data";
 
 const BACKEND_BASE =
-  import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:8000";
+  import.meta.env.VITE_BACKEND_URL || "https://agrolenss.onrender.com";
 
 // -------------------------
 // Static Crop
