@@ -19,7 +19,6 @@ function normalizeCropId(name) {
 
 export default function CropsPage() {
    const [crops, setCrops] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch("https://agrolenss.onrender.com/api/crops/")
