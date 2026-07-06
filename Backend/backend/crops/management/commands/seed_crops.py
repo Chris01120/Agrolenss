@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from crops.models import Crop, ClimateZone, CropZone, PestAlert
 
+
 class Command(BaseCommand):
     help = "Seed West African crop intelligence data"
 
@@ -11,11 +12,47 @@ class Command(BaseCommand):
         PestAlert.objects.all().delete()
         Crop.objects.all().delete()
 
+        # Create climate zones FIRST
+        ClimateZone.objects.get_or_create(
+            name="Coastal",
+            defaults={
+                "rainfall_level": "High",
+                "humidity_level": "High",
+                "temperature_range": "24-32°C",
+            },
+        )
+
+        ClimateZone.objects.get_or_create(
+            name="Savanna",
+            defaults={
+                "rainfall_level": "Medium",
+                "humidity_level": "Medium",
+                "temperature_range": "22-35°C",
+            },
+        )
+
+        ClimateZone.objects.get_or_create(
+            name="Rainforest",
+            defaults={
+                "rainfall_level": "Very High",
+                "humidity_level": "Very High",
+                "temperature_range": "24-30°C",
+            },
+        )
+
+        ClimateZone.objects.get_or_create(
+            name="Semi-Arid",
+            defaults={
+                "rainfall_level": "Low",
+                "humidity_level": "Low",
+                "temperature_range": "25-40°C",
+            },
+        )
+
+        # NOW build zone dictionary
         zones = {
             z.name.lower(): z for z in ClimateZone.objects.all()
         }
-
-
         crops = [
 
             {
